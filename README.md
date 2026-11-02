@@ -19,12 +19,12 @@ python -m jev_demo.blog           # 跑博客里贴的那几段代码
 
 ## 与博客的对应
 
-文章只有两章带代码：**四、怎么接** 和 **五、一个场景**。`jev_demo/blog.py` 里是这两章贴出来的函数，函数体一字不差（只多了 print 和一行调用）：
+文章只有两章带代码：**四、接法** 和 **五、让模型选不出不存在的值**。`jev_demo/blog.py` 里是这两章贴出来的函数，函数体一字不差（只多了 print 和一行调用）：
 
 | 博客章节 | 代码位置 |
 |---|---|
-| 四、怎么接：封一层薄客户端就够 | `client.py` 的 `choice_q` / `noul_q` / `score_q` / `system_one()`；`blog.py` 的 `route()` |
-| 五、一个场景：让模型选不出不存在的值 | `blog.py` 的 `DEPARTMENTS` / `DEPT` |
+| 四、接法：一层薄客户端 | `client.py` 的 `choice_q` / `noul_q` / `score_q` / `system_one()`；`blog.py` 的 `route()` |
+| 五、让模型选不出不存在的值 | `blog.py` 的 `DEPARTMENTS` / `DEPT` |
 
 `blog.py` 另外跑了两段文章没展开的用法，留作参考：`gate()`（同一个 Noul 问题、两个输入、两种结论）和 `guarded_call()`（工具执行前先过一道判定）。
 
