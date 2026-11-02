@@ -3,7 +3,7 @@
 把 [Jev](https://api.typesafe.ai)（TypeSafe 的 System One 判定模型）的调用链路在本地跑起来：
 **工单进去 → 概率分布出来 → 按阈值分成三档动作**。终端可视化 + 单文件 HTML 报告。
 
-配套文章：飞书《Jev 实战：让软件做判定，而不是让模型生成》。
+配套文章：飞书《Jev：让软件做判定，而不是让模型生成》。
 
 ```
 python run.py                     # 终端表格
@@ -19,10 +19,18 @@ python -m jev_demo.blog           # 跑博客里贴的那几段代码
 
 ## 与博客的对应
 
-`jev_demo/blog.py` 里就是文章第四章、第五章贴的代码，函数体一字不差（只多了 print）：
+文章只有两章带代码：**四、怎么接** 和 **五、一个场景**。`jev_demo/blog.py` 里是这两章贴出来的函数，函数体一字不差（只多了 print 和一行调用）：
 
 | 博客章节 | 代码位置 |
 |---|---|
+| 四、怎么接：封一层薄客户端就够 | `client.py` 的 `choice_q` / `noul_q` / `score_q` / `system_one()`；`blog.py` 的 `route()` |
+| 五、一个场景：让模型选不出不存在的值 | `blog.py` 的 `DEPARTMENTS` / `DEPT` |
+
+`blog.py` 另外跑了两段文章没展开的用法，留作参考：`gate()`（同一个 Noul 问题、两个输入、两种结论）和 `guarded_call()`（工具执行前先过一道判定）。
+
+`run.py` 是同一套东西的场景化版本（4 场景 8 用例），两者共用 `client.py`，所以判定逻辑只有一份。
+
+---|---|
 | 4.1 裸 HTTP：契约完整暴露 | `client.py` 的 `system_one()` |
 | 4.2 薄客户端：选项即字典 key，阈值写成参数 | `blog.py` 的 `choice_q` / `DEPT` / `route()` |
 | 4.3 在工具调用前插一道判定 | `blog.py` 的 `guarded_call()` |

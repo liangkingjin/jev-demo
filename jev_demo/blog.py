@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from .client import choice_q, noul_q, system_one
 
-# ---------------------------------------------------------------- 5.2 部门表
+# ---------------------------------------------------------------- 部门表
 
 # 组织架构表来自数据库/配置中心，不是模型生成的；描述就是分类规范
 DEPARTMENTS = {
@@ -27,7 +27,7 @@ DEPT = choice_q(
 )
 
 
-# ---------------------------------------------------------------- 4.2 阈值
+# ---------------------------------------------------------------- 阈值
 
 def route(answer, min_confidence=0.70, min_probability=0.60):
     """阈值写在签名上：它们是产品决策，应该出现在 code review 里。"""
@@ -39,7 +39,7 @@ def route(answer, min_confidence=0.70, min_probability=0.60):
     return "auto", top
 
 
-# ---------------------------------------------------------------- 5.3 闸门
+# ---------------------------------------------------------------- 退款闸门
 
 REFUND_SAFE = noul_q(
     "这笔退款金额合理、理由成立，可以直接原路退回，不需要人工复核",
@@ -55,7 +55,7 @@ def gate(answer, threshold=0.75):
     return "human", f"P={p:.2f} 未达 {threshold}，转人工审核金额与频次"
 
 
-# ---------------------------------------------------------------- 4.3 挂载点
+# ---------------------------------------------------------------- 工具调用前的挂载点
 
 def check_order(order_id):
     return f"查订单 {order_id} 的物流"
@@ -84,7 +84,7 @@ def main():
     print(" 博客里那几段 Python 代码 · 客服工单分诊 · 实际跑一遍")
     print("=" * 70)
 
-    print("\n[4.1 + 4.2] 一次请求问一个问题，然后按阈值分流")
+    print("\n[四] 一次请求问一个问题，按阈值分流")
     cases = [
         "扣款扣了两次，账单金额不对，要退款",
         "物流一直没更新，货到现在没收到",
@@ -96,7 +96,7 @@ def main():
         print(f"  {text:<22} → {verdict:<5} {detail:<10} "
               f"(conf={answer['confidence']:.2f} top={answer['probabilities'][answer['choice']]:.2f})")
 
-    print("\n[5.2] 部门只能从表里选，编不出一个不存在的部门")
+    print("\n[五] 部门只能从表里选，编不出一个不存在的部门")
     for text in ["装不上，一直报错，怎么弄", "账单扣款不对，发票也开错了"]:
         answer = system_one(text, [DEPT])["answers"][0]
         verdict, detail = route(answer, min_confidence=0.72, min_probability=0.50)
@@ -106,7 +106,7 @@ def main():
         assert detail in DEPARTMENTS, "模型选中了不存在的部门"
         print(f"  {text:<18} → {detail}（{DEPARTMENTS[detail]}）conf={answer['confidence']:.2f}")
 
-    print("\n[5.3] 退款闸门：同一问题，两个输入")
+    print("\n[附] 退款闸门：同一个 Noul 问题，两个输入")
     for text, amt in [
         ("耳机有杂音，申请退款 金额 89 元 理由成立", 89),
         ("要求退款 大额 8999 元 已经反复申请 三次 可疑", 8999),
@@ -115,7 +115,7 @@ def main():
         verdict, detail = gate(answer)
         print(f"  ¥{amt:<6} → {verdict:<5} {detail}")
 
-    print("\n[4.3] 工具调用前插一道判定")
+    print("\n[附] 工具调用前插一道判定")
     for text, amt in [
         ("耳机有杂音，申请退款 金额 89 元 理由成立", 89),
         ("要求退款 大额 8999 元 反复申请 可疑", 8999),
