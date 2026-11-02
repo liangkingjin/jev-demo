@@ -1,7 +1,7 @@
 # jev-demo
 
 把 [Jev](https://api.typesafe.ai)（TypeSafe 的 System One 判定模型）的调用链路在本地跑起来：
-**state 进去 → 概率分布出来 → 按阈值分成三档动作**。终端可视化 + 单文件 HTML 报告。
+**工单进去 → 概率分布出来 → 按阈值分成三档动作**。终端可视化 + 单文件 HTML 报告。
 
 配套文章：飞书《Jev 实战：让软件做判定，而不是让模型生成》。
 
@@ -9,9 +9,28 @@
 python run.py                     # 终端表格
 python run.py --html report.html  # 额外导出一份 HTML 报告
 python run.py --live              # 真打 api.typesafe.ai（需要 TYPESAFE_API_KEY）
+
+python -m jev_demo.blog           # 跑博客里贴的那几段代码
 ```
 
 只依赖标准库，Python 3.9+。
+
+---
+
+## 与博客的对应
+
+`jev_demo/blog.py` 里就是文章第四章、第五章贴的代码，函数体一字不差（只多了 print）：
+
+| 博客章节 | 代码位置 |
+|---|---|
+| 4.1 裸 HTTP：契约完整暴露 | `client.py` 的 `system_one()` |
+| 4.2 薄客户端：选项即字典 key，阈值写成参数 | `blog.py` 的 `choice_q` / `DEPT` / `route()` |
+| 4.3 在工具调用前插一道判定 | `blog.py` 的 `guarded_call()` |
+| 5.2 选项来自组织架构表：值域就是真相 | `blog.py` 的 `DEPARTMENTS` / `DEPT` |
+| 5.3 退款前的最后一道判定 | `blog.py` 的 `REFUND_SAFE` / `gate()` |
+
+`run.py` 是同一套东西的场景化版本（4 场景 8 用例），`blog.py` 是文章片段的逐段复刻。
+两者共用 `client.py`，所以判定逻辑只有一份。
 
 ---
 
@@ -19,22 +38,23 @@ python run.py --live              # 真打 api.typesafe.ai（需要 TYPESAFE_API
 
 - **零依赖**：`python run.py` 直接跑，不用建 Maven、不用下 Jackson、不用对齐 JDK 版本。为了看一眼判定结果，不值得先配半小时环境。
 - **契约不打折**：请求体就是 `{model, state, questions}` 的真实 JSON，字段名和官方一致。要搬到 Java 时，只换「发 HTTP 的那一层」，其余逻辑原样搬。
-- **改一行就能试**：改 `scenarios.py` 里的 state 或阈值，立刻看到分档变化——这是这个 demo 的主要用途。
+- **改一行就能试**：改 `blog.py` 里的 state 或阈值，立刻看到分档变化——这是这个 demo 的主要用途。
 
-如果你要的是「能进生产仓库的 Java 代码」，那应该用 `jev4j`（`io.github.maxsumrall.jev4j:jev4j-core`），不是这个。
+如果你确实要 Java，官方有 `jev4j`（`io.github.maxsumrall.jev4j:jev4j-core`，Java 17+，MIT），
+但博客和这个项目统一走 Python，所以两边代码能一一对上。
 
 ---
 
 ## 跑起来会看到什么
 
-四个场景、八次判定，覆盖三种原语：
+场景是一家电商的**客服工单分诊**：四个场景、八次判定，覆盖三种原语。
 
 | 场景 | 原语 | 想说明什么 |
 |---|---|---|
-| ① 意图路由 | Choice | 选项就是工具清单；低概率不猜，直接进澄清 |
-| ② 类目选择 | Choice（选项来自「数据库」） | 模型能选错类目，但选不出一个不存在的 `category_id` |
-| ③ 加购闸门 | Noul | 同一句问题、两个输入，一个自动执行、一个转人工 |
-| ④ 一次两问 | Score + Noul | 同一段文本上的多个判断不该拆成两次请求 |
+| ① 意图路由 | Choice | 选项就是流程清单；低概率不猜，直接进澄清 |
+| ② 部门路由 | Choice（选项来自组织架构表） | 模型能选错部门，但选不出一个不存在的部门 |
+| ③ 退款闸门 | Noul | 同一句问题、两个输入，一个小额放行、一个转人工 |
+| ④ 一次两问 | Score + Noul | 同一段工单文本上的多个判断不该拆成两次请求 |
 
 每个用例最后一行是判定：
 

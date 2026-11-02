@@ -62,11 +62,11 @@ class TestBands(unittest.TestCase):
     EXPECTED = {
         ("intent", "明确指令"): "auto",
         ("intent", "含糊提问"): "human",
-        ("catalog", "指向明确"): "auto",
-        ("catalog", "跨类目"): "human",
-        ("gate", "正常加购"): "auto",
-        ("gate", "异常加购"): "human",
-        ("triage", "断链+赶时间"): "human",
+        ("dept", "指向明确"): "auto",
+        ("dept", "跨部门"): "review",
+        ("gate", "正常退款"): "auto",
+        ("gate", "异常退款"): "human",
+        ("triage", "崩溃+赶时间"): "human",
         ("triage", "普通咨询"): "review",
     }
 
@@ -88,14 +88,19 @@ class TestThresholds(unittest.TestCase):
     """直接喂合成答案，验证 decide 的边界。"""
 
     @staticmethod
-    def _choice(p, top="cart"):
+    def _choice(p, top="check_order"):
         probs = {top: p, "other": round(1 - p, 4)}
         return {"type": "choice", "choice": top, "confidence": 0.5, "probabilities": probs}
 
     def test_intent_edges(self):
-        self.assertEqual(S.decide_intent({"tool": self._choice(0.95)})[0], "auto")
-        self.assertEqual(S.decide_intent({"tool": self._choice(0.60)})[0], "review")
-        self.assertEqual(S.decide_intent({"tool": self._choice(0.30)})[0], "human")
+        self.assertEqual(S.decide_intent({"flow": self._choice(0.95)})[0], "auto")
+        self.assertEqual(S.decide_intent({"flow": self._choice(0.60)})[0], "review")
+        self.assertEqual(S.decide_intent({"flow": self._choice(0.30)})[0], "human")
+
+    def test_dept_edges(self):
+        self.assertEqual(S.decide_dept({"dept": self._choice(0.90, "billing")})[0], "auto")
+        self.assertEqual(S.decide_dept({"dept": self._choice(0.60, "billing")})[0], "review")
+        self.assertEqual(S.decide_dept({"dept": self._choice(0.40, "billing")})[0], "human")
 
     def test_gate_edges(self):
         for p, band in [(0.95, "auto"), (0.70, "review"), (0.40, "human")]:

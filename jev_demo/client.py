@@ -101,8 +101,11 @@ class MockJevClient:
     def system_one(self, req):
         text = _state_text(req["state"])
         sg = _grams(text)
+        qs = req["questions"]
+        # 内部场景用 dict 带名字，博客里的写法用 list（与真实接口一致），两种都收
+        pairs = list(qs.items()) if isinstance(qs, dict) else list(enumerate(qs))
         answers = {}
-        for name, q in req["questions"].items():
+        for name, q in pairs:
             if q["type"] == "choice":
                 answers[name] = self._choice(q, text, sg)
             elif q["type"] == "noul":
@@ -115,8 +118,8 @@ class MockJevClient:
             "model": self.model,
             "answers": answers,
             "usage": {
-                "input_tokens": max(64, int(len(text + json.dumps(req["questions"], ensure_ascii=False)) / 2.2)),
-                "output_tokens": 48 * len(req["questions"]),
+                "input_tokens": max(64, int(len(text + json.dumps(qs, ensure_ascii=False)) / 2.2)),
+                "output_tokens": 48 * len(pairs),
             },
         }
 
@@ -157,6 +160,22 @@ class MockJevClient:
 
 
 # ---------------------------------------------------------------- 真实后端
+
+def system_one(state, questions, model=MODEL, client=None):
+    """博客 4.1 贴的就是这个函数：一次请求问多个问题，返回整个响应。
+
+    有 TYPESAFE_API_KEY 走真接口，没有就走离线 Mock——契约完全一样，
+    所以 `system_one(...)["answers"]` 这种写法在两种模式下都不用改。
+    """
+    if client is None:
+        client = LiveJevClient(model=model) if os.environ.get("TYPESAFE_API_KEY") else MockJevClient(model=model)
+    raw = client.system_one(request(state, questions, model))
+    # 真实接口的 answers 是数组，顺序与 questions 一致；Mock 内部用 dict，这里统一成数组
+    answers = raw["answers"]
+    if isinstance(answers, dict):
+        raw = dict(raw, answers=list(answers.values()))
+    return raw
+
 
 class LiveJevClient:
     """真打 TypeSafe。需要环境变量 TYPESAFE_API_KEY。
